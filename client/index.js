@@ -27,6 +27,7 @@ try {
     store.masterKey = Buffer.from(masterKey, 'base64');
     store.rsaPrivateKey = rsaPrivateKey;
     store.sessionIdentifier = sessionIdentifier;
+    store.stay = true;
 
     require('./clis/user').delimiter(name + '@mini-mega$').show()
 } catch (err) {

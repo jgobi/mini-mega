@@ -88,6 +88,7 @@ module.exports = function (vorpal, options) {
             default: false,
         });
 
+        store.stay = stay;
         if (stay) writeFileSync(path.join(__dirname, '..', '.credentials.json'), JSON.stringify({
             name,
             masterKey: masterKey.toString('base64'),

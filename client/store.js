@@ -3,4 +3,5 @@ module.exports = {
     masterKey: null,
     rsaPrivateKey: '',
     sessionIdentifier: '',
+    stay: false,
 };

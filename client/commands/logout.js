@@ -29,4 +29,23 @@ module.exports = function (vorpal, options) {
         this.log('Disconnected');
         require('../clis/main').show();
     });
+
+    vorpal.find('exit').remove();
+
+    vorpal
+    .command('exit', 'Exit the application, disconnecting if needed')
+    .alias('quit')
+    .action(async function(args) {
+        if (!store.stay) {
+            try {
+                await axios.post(API_BASE + '/user/logout', { sessionIdentifier: store.sessionIdentifier });
+            } catch (e) {}
+            store.name = '';
+            store.masterKey = null;
+            store.rsaPrivateKey = '';
+            store.sessionIdentifier = '';
+            this.log('Disconnected');
+        }
+        process.exit(0);
+    });
 };
