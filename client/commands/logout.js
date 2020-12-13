@@ -27,7 +27,9 @@ module.exports = function (vorpal, options) {
             unlinkSync(path.join(__dirname, '..', '.credentials.json'));
         } catch (err) {}
         this.log('Disconnected');
-        require('../clis/main').show();
+
+        store.prompt = 'guest@mini-mega$';
+        require('../clis/main').delimiter('Local: ' + store.localFolder + '\t' + 'Remote: ' + store.remoteFolder + '\n' + store.prompt).show();
     });
 
     vorpal.find('exit').remove();

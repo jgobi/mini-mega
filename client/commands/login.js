@@ -96,6 +96,7 @@ module.exports = function (vorpal, options) {
             sessionIdentifier,
         }));
 
-        require('../clis/user').delimiter(name + '@mini-mega$').show();
+        store.prompt = name + '@mini-mega$';
+        require('../clis/user').delimiter('Local: ' + store.localFolder + '\t' + 'Remote: ' + store.remoteFolder + '\n' + store.prompt).show();
     })
 };

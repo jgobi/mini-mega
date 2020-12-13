@@ -4,7 +4,6 @@ vorpal.history('mini-mega-client-main');
 
 vorpal.use(require('../commands/register'));
 vorpal.use(require('../commands/login'));
-
-vorpal.delimiter('guest@mini-mega$');
+vorpal.use(require('../commands/system'));
 
 module.exports = vorpal;

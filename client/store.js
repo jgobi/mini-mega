@@ -4,4 +4,7 @@ module.exports = {
     rsaPrivateKey: '',
     sessionIdentifier: '',
     stay: false,
+    prompt: '',
+    localFolder: './',
+    remoteFolder: '/',
 };
