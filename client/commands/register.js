@@ -112,7 +112,7 @@ module.exports = function (vorpal, options) {
             name: 'pass',
             type: 'password',
             message: 'Enter your password: ',
-            // validate (input) { return input.length >= 8 || 'Password too short. Must be at least 8 characters long'; },
+            validate (input) { return input.length >= 8 || 'Password too short. Must be at least 8 characters long'; },
         }, {
             name: 'pass2',
             type: 'password',
