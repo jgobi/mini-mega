@@ -7,6 +7,7 @@ const serverRandomValue = 'xXVRMa84w7wXy8MICH/tRA==';
 let router = Router();
 
 let users = [];
+let activeSessions = {};
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -43,10 +44,11 @@ router.post('/login', defaultRoute(async req => {
     await wait(Math.random() * 50);
     let hashedAuthKey = createHash('sha256').update(authKey).digest('base64');
     if (user && user.hashedAuthKey === hashedAuthKey) {
+        const sessionIdentifier = randomBytes(24).toString('base64');
+        const encryptedSessionIdentifier = publicEncrypt(user.publicRsaKey, Buffer.from(sessionIdentifier, 'utf-8')).toString('base64');
+        user.sessions.push(sessionIdentifier);
 
-        const sessionIdentifier = randomBytes(16);
-        const encryptedSessionIdentifier = publicEncrypt(user.publicRsaKey, sessionIdentifier).toString('base64');
-        user.sessions.push(encryptedSessionIdentifier);
+        activeSessions[sessionIdentifier] = user;
 
         return {
             name: user.name,
@@ -60,13 +62,13 @@ router.post('/login', defaultRoute(async req => {
 }));
 
 router.post('/logout', (req, res) => {
-    const { email, sessionIdentifier } = req.body;
+    const { sessionIdentifier } = req.body;
     res.status(200).json({ error: null });
 
-    const user = users.find(u => u.email === email);
+    const user = activeSessions[sessionIdentifier];
     if (user) {
-        const encryptedSessionIdentifier = publicEncrypt(user.publicRsaKey, Buffer.from(sessionIdentifier, 'base64')).toString('base64');
-        user.sessions.splice(user.sessions.indexOf(encryptedSessionIdentifier), 1);
+        user.sessions.splice(user.sessions.indexOf(sessionIdentifier), 1);
+        delete activeSessions[sessionIdentifier];
     };
 });
 

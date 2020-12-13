@@ -16,4 +16,19 @@ require('vorpal').prototype._init = function () {
 process.env.API_BASE = 'http://localhost:3030/api';
 process.env.PBKDF2_COST = 10000;
 
-require('./clis/main').show();
+const { readFileSync } = require('fs');
+const path = require('path');
+const store = require('./store');
+
+try {
+    let { name, masterKey, rsaPrivateKey, sessionIdentifier } = JSON.parse(readFileSync(path.join(__dirname, '.credentials.json'), 'utf-8'));
+    
+    store.name = name;
+    store.masterKey = Buffer.from(masterKey, 'base64');
+    store.rsaPrivateKey = rsaPrivateKey;
+    store.sessionIdentifier = sessionIdentifier;
+
+    require('./clis/user').delimiter(name + '@mini-mega$').show()
+} catch (err) {
+    require('./clis/main').show();
+}

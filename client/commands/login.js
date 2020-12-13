@@ -1,6 +1,8 @@
 const { pbkdf2, createDecipheriv, privateDecrypt } = require('crypto');
 const store = require('../store');
 const axios = require('axios').default;
+const { writeFileSync } = require('fs');
+const path = require('path');
 
 const API_BASE = process.env.API_BASE;
 const PBKDF2_COST = +process.env.PBKDF2_COST;
@@ -26,9 +28,9 @@ function login2(encryptionKey, encryptedMasterKey, encryptedRsaPrivateKey, encry
     const masterKey = Buffer.concat([decipher.update(encryptedMasterKey, 'base64'), decipher.final()]);
 
     const decipher2 = createDecipheriv('aes-128-ecb', masterKey, '');
-    const rsaPrivateKey = Buffer.concat([decipher2.update(encryptedRsaPrivateKey, 'base64'), decipher2.final()]);
+    const rsaPrivateKey = Buffer.concat([decipher2.update(encryptedRsaPrivateKey, 'base64'), decipher2.final()]).toString('utf-8');
 
-    const sessionIdentifier = privateDecrypt(rsaPrivateKey, Buffer.from(encryptedSessionIdentifier, 'base64')).toString('base64');
+    const sessionIdentifier = privateDecrypt(rsaPrivateKey, Buffer.from(encryptedSessionIdentifier, 'base64')).toString('utf-8');
 
     return {
         masterKey,
@@ -57,13 +59,13 @@ module.exports = function (vorpal, options) {
             message: 'Enter your password: ',
         }]);
 
-        const ans1 = await axios.post(API_BASE + '/user/salt', { email: email });
+        const ans1 = await axios.post(API_BASE + '/user/salt', { email });
         const { salt } = ans1.data;
 
         const { encryptionKey, authKey } = await login1(pass, salt);
 
         const ans2 = await axios.post(API_BASE + '/user/login', {
-            email: email,
+            email,
             authKey,
         });
 
@@ -73,12 +75,26 @@ module.exports = function (vorpal, options) {
         const { masterKey, rsaPrivateKey, sessionIdentifier } = login2(encryptionKey, encryptedMasterKey, encryptedRsaPrivateKey, encryptedSessionIdentifier);
 
         store.name = name;
-        store.email = email;
         store.masterKey = masterKey;
         store.rsaPrivateKey = rsaPrivateKey;
         store.sessionIdentifier = sessionIdentifier;
 
         this.log('Authenticated as ' + name);
+
+        const { stay } = await this.prompt({
+            name: 'stay',
+            type: 'confirm',
+            message: 'Stay logged in? ',
+            default: false,
+        });
+
+        if (stay) writeFileSync(path.join(__dirname, '..', '.credentials.json'), JSON.stringify({
+            name,
+            masterKey: masterKey.toString('base64'),
+            rsaPrivateKey,
+            sessionIdentifier,
+        }));
+
         require('../clis/user').delimiter(name + '@mini-mega$').show();
     })
 };
