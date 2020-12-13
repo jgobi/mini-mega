@@ -20,6 +20,8 @@ const { readFileSync } = require('fs');
 const path = require('path');
 const store = require('./store');
 
+store.localFolder = process.cwd();
+
 try {
     let { name, masterKey, rsaPrivateKey, sessionIdentifier } = JSON.parse(readFileSync(path.join(__dirname, '.credentials.json'), 'utf-8'));
     
@@ -28,7 +30,6 @@ try {
     store.rsaPrivateKey = rsaPrivateKey;
     store.sessionIdentifier = sessionIdentifier;
     store.stay = true;
-    store.localFolder = process.cwd();
 
     store.prompt = name + '@mini-mega$';
     require('./clis/user').delimiter('Local: ' + store.localFolder + '\t' + 'Remote: ' + store.remoteFolder + '\n' + store.prompt).show();
