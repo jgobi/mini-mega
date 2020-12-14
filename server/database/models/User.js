@@ -77,7 +77,7 @@ function getBySession (session) {
 
 function createSession (uuid, session) {
     return new Promise((resolve, reject) => {
-        db.run('insert into session (id, user_uuid) values (?, ?)', [uuid, session], err => {
+        db.run('insert into session (id, user_uuid) values (?, ?)', [session, uuid], err => {
             if (err) reject(err);
             else resolve({
                 uuid,
