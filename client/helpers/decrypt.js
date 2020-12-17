@@ -41,6 +41,23 @@ function decryptChunk(chunk, key, nonce, macs, ctr = 0) {
     };
 }
 
+/**
+ * Decrypt buffer iv|encrypted_data returning decrypted data.
+ * @param {Buffer} buffer 
+ * @param {Buffer} fileKey 
+ */
+function decryptInfo(buffer, fileKey) {
+    const iv = buffer.slice(0, 16);
+    const data = buffer.slice(16);
+    const decipher = crypto.createDecipheriv('aes-128-cbc', fileKey, iv).setAutoPadding(false);
+    const decrypted = Buffer.concat([
+        decipher.update(data),
+        decipher.final(),
+    ]);
+    return decrypted;
+}
+
 module.exports = {
     decryptChunk,
+    decryptInfo,
 };

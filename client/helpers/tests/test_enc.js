@@ -1,18 +1,20 @@
 const { readFileSync, writeFileSync, appendFileSync } = require('fs');
-const { join } = require('path');
+const { join, basename } = require('path');
 
 const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
 
-const file = readFileSync(join(__dirname, process.argv[2]));
+const fullPath = join(__dirname, process.argv[2]);
+const fileName = Buffer.from(basename(fullPath), 'utf-8');
+if (fileName.length > 255) return console.error('Filename too long');
+
+const file = readFileSync(fullPath);
 
 const { generateFileKey, obfuscateFileKey } = require('../keys');
-const { encryptChunk } = require('../encrypt');
+const { encryptChunk, encryptInfo } = require('../encrypt');
+const { encodeInfoFileV1 } = require('../infoFile');
 
-const BUF_SIZE = file.length;
-
-console.log('Encrypting buffer of ' + BUF_SIZE + ' bytes.');
+console.log('Encrypting buffer of ' + file.length + ' bytes.');
 let { key, nonce } = generateFileKey();
-
 
 let paddingSize = 0;
 let condensedMac = Buffer.alloc(16);
@@ -34,13 +36,8 @@ for (let i = 0; i < file.length; i += CHUNK_SIZE) {
 }
 
 
-let bb = Buffer.alloc(1 + 4 + 16*macs.length);
-bb.writeInt8(paddingSize, 0);
-bb.writeInt32BE(macs.length, 1);
-for (let i in macs) {
-    bb.set(macs[i], 5 + i*16);
-}
+let encryptedInfoFile = encryptInfo(encodeInfoFileV1(file.length, fileName, macs), key);
+writeFileSync(join(__dirname, process.argv[3]+'.info'), encryptedInfoFile);
 
-writeFileSync(join(__dirname, process.argv[3]+'.info'), bb);
 let obfuscatedFileKey = obfuscateFileKey(key, nonce, condensedMac).toString('base64').substr(0, 43);
 writeFileSync(join(__dirname, process.argv[3]+'.key'), obfuscatedFileKey, { encoding: 'utf-8'});

@@ -61,6 +61,23 @@ function encryptChunk(chunk, key, nonce, ctr = 0, condensedMac = null) {
     };
 }
 
+/**
+ * Encrypt buffer returning iv concatenated with encrypted buffer.
+ * @param {Buffer} buffer 
+ * @param {Buffer} fileKey 
+ */
+function encryptInfo(buffer, fileKey) {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-128-cbc', fileKey, iv).setAutoPadding(false);
+    const encrypted = Buffer.concat([
+        iv,
+        cipher.update(buffer),
+        cipher.final(),
+    ]);
+    return encrypted;
+}
+
 module.exports = {
     encryptChunk,
+    encryptInfo,
 };
