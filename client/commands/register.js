@@ -25,19 +25,19 @@ const PBKDF2_COST = +process.env.PBKDF2_COST;
 function register (name, email, pass) {
     return new Promise((resolve, reject) => {
         const masterKey = randomBytes(16);
-        const clientRandomValue = randomBytes(16).toString('base64');
+        const clientRandomValue = randomBytes(16);
         const padding = Array(191).fill('P').join('');
-        const salt = createHash('sha256').update('mini-mega' + padding + clientRandomValue).digest().toString('base64');
+        const salt = createHash('sha256').update('mini-mega' + padding).update(clientRandomValue).digest();
 
         pbkdf2(pass, salt, PBKDF2_COST, 32, 'sha512', (err, derivedKey) => {
             if (err) return reject(err);
 
             const derivedEncryptionKey = derivedKey.slice(0, 16);
             const cipher = createCipheriv('aes-128-ecb', derivedEncryptionKey, '');
-            const encryptedMasterKey = Buffer.concat([cipher.update(masterKey), cipher.final()]);
+            const encryptedMasterKey = Buffer.concat([cipher.update(masterKey), cipher.final()]).toString('base64');
 
 
-            const derivedAuthKey = derivedKey.slice(16, 32).toString('base64');
+            const derivedAuthKey = derivedKey.slice(16, 32);
             const hashedAuthKey = createHash('sha256').update(derivedAuthKey).digest().toString('base64');
 
 
@@ -55,7 +55,7 @@ function register (name, email, pass) {
                 if (err) return reject(err);
                 
                 const cipher = createCipheriv('aes-128-ecb', masterKey, '');
-                const encryptedRsaPrivateKey = Buffer.concat([cipher.update(privateRsaKey), cipher.final()]);
+                const encryptedRsaPrivateKey = Buffer.concat([cipher.update(privateRsaKey), cipher.final()]).toString('base64');
 
                 generateKeyPair('ed25519', {
                     publicKeyEncoding: {
@@ -70,18 +70,18 @@ function register (name, email, pass) {
                     if (err) return reject(err);
                     
                     const cipher = createCipheriv('aes-128-ecb', masterKey, '');
-                    const encryptedEdPrivateKey = Buffer.concat([cipher.update(privateEdKey), cipher.final()]);
+                    const encryptedEdPrivateKey = Buffer.concat([cipher.update(privateEdKey), cipher.final()]).toString('base64');
         
                     return resolve({
                         name,
                         email,
-                        clientRandomValue,
-                        encryptedMasterKey: encryptedMasterKey.toString('base64'),
+                        clientRandomValue: clientRandomValue.toString('base64'),
+                        encryptedMasterKey,
                         hashedAuthKey,
                         publicRsaKey,
-                        encryptedRsaPrivateKey: encryptedRsaPrivateKey.toString('base64'),
+                        encryptedRsaPrivateKey,
                         publicEdKey,
-                        encryptedEdPrivateKey: encryptedEdPrivateKey.toString('base64'),
+                        encryptedEdPrivateKey,
                     });
                 });
               });

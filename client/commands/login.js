@@ -7,6 +7,11 @@ const path = require('path');
 const API_BASE = process.env.API_BASE;
 const PBKDF2_COST = +process.env.PBKDF2_COST;
 
+/**
+ * @param {string} pass 
+ * @param {Buffer} salt 
+ * @returns {Promise<{ encryptionKey: Buffer, authKey: string }>}
+ */
 function login1 (pass, salt) {
     return new Promise((resolve, reject) => {
         pbkdf2(pass, salt, PBKDF2_COST, 32, 'sha512', (err, derivedKey) => {
@@ -62,7 +67,7 @@ module.exports = function (vorpal, options) {
         const ans1 = await axios.post(API_BASE + '/user/salt', { email });
         const { salt } = ans1.data;
 
-        const { encryptionKey, authKey } = await login1(pass, salt);
+        const { encryptionKey, authKey } = await login1(pass, Buffer.from(salt, 'base64'));
 
         const ans2 = await axios.post(API_BASE + '/user/login', {
             email,

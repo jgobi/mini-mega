@@ -4,7 +4,10 @@ const { createHash, publicEncrypt, randomBytes } = require('crypto');
 
 const User = require('../database/models/User');
 
-const serverRandomValue = 'xXVRMa84w7wXy8MICH/tRA==';
+const serverRandomValue = Buffer.from([
+    35,  13,  127, 196, 149,  48, 103,  87,
+    137, 233, 132, 137, 171, 235,   6,  88,
+]);
 
 let router = Router();
 
@@ -29,13 +32,13 @@ router.post('/salt', defaultRoute(async req => {
         let str = 'mini-mega';
         let padding = Array(200 - str.length).fill('P').join('');
         return {
-            salt: createHash('sha256').update(str + padding + user.clientRandomValue).digest('base64'),
+            salt: createHash('sha256').update(str + padding).update(Buffer.from(user.clientRandomValue, 'base64')).digest('base64'),
         };
     } else {
         let str = email + 'mini-mega';
         let padding = Array(200 - str.length).fill('P').join('');
         return {
-            salt: createHash('sha256').update(str + padding + serverRandomValue).digest('base64'),
+            salt: createHash('sha256').update(str + padding).update(serverRandomValue).digest('base64'),
         };
     }
 }));
@@ -44,7 +47,7 @@ router.post('/login', defaultRoute(async req => {
     const { email, authKey } = req.body;
     const user = await User.getByEmail(email);
     await wait(Math.random() * 50);
-    let hashedAuthKey = createHash('sha256').update(authKey).digest('base64');
+    let hashedAuthKey = createHash('sha256').update(Buffer.from(authKey, 'base64')).digest('base64');
     if (user && user.hashedAuthKey === hashedAuthKey) {
         const sessionIdentifier = randomBytes(24).toString('base64');
         const encryptedSessionIdentifier = publicEncrypt(user.publicRsaKey, Buffer.from(sessionIdentifier, 'utf-8')).toString('base64');
