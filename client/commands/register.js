@@ -129,7 +129,7 @@ module.exports = function (vorpal, options) {
             let ans = await axios.post(API_BASE + '/user/register', payload);
             this.log('Success! ', ans.data);
         } catch (e) {
-            this.log('Error: ', e.response.data.message);
+            this.log('Error: ', e.response ? e.response.data.message : e.toString());
         }
     })
     .cancel(() => void 0);
