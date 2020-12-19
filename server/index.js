@@ -1,4 +1,4 @@
-require('log-prefix')(() => `[${require('dayjs')().format('DD/MM/YYYY hh:mm:ss.SSS (Z)')}]`); // Insere data nos logs
+require('log-prefix')(() => `[${require('dayjs')().format('DD/MM/YYYY HH:mm:ss.SSS (Z)')}]`); // Insere data nos logs
 
 const express = require('express');
 const cors = require('cors');
