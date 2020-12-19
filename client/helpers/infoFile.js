@@ -48,7 +48,6 @@ function encodeInfoFileV1(fileSize, fileName, macs) {
  * @param {Buffer} file
  */
 function decodeInfoFileV1(file) {
-    console.log('version', file.readUInt8(0))
     const isVersion1 = file.readUInt8(0) === 1;
     if (!isVersion1) throw new Error('Info file version is invalid');
 

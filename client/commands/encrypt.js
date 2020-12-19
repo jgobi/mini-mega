@@ -3,6 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const { createCipheriv } = require('crypto');
 
+const { generateFileKey, obfuscateFileKey } = require('../helpers/keys');
+const { encryptChunk, encryptInfo } = require('../helpers/encrypt');
+const { encodeInfoFileV1 } = require('../helpers/infoFile');
+const { readFileChunk } = require('../helpers/readFile');
+
+const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
+
 const autocomplete = (input) => {
     try {
         let dest = path.isAbsolute(input) ? input : store.localFolder + '/' + input;
@@ -21,14 +28,8 @@ const autocomplete = (input) => {
  * @param {string} destination 
  */
 function encrypt (fullPath, destination) {
-    const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
     const fileName = Buffer.from(path.basename(fullPath), 'utf-8');
     if (fileName.length > 255) return console.error('Filename too long');
-
-    const { generateFileKey, obfuscateFileKey } = require('../helpers/keys');
-    const { encryptChunk, encryptInfo } = require('../helpers/encrypt');
-    const { encodeInfoFileV1 } = require('../helpers/infoFile');
-    const { readFileChunk } = require('../helpers/readFile');
 
     let { key, nonce } = generateFileKey();
 
@@ -41,7 +42,6 @@ function encrypt (fullPath, destination) {
 
     fs.writeFileSync(destination, Buffer.alloc(0));
     let ctr = 0;
-    let i = 0;
     for (let buf of fileGenerator) {
         if (!buf) break;
         fileSize += buf.length;
@@ -61,9 +61,9 @@ function encrypt (fullPath, destination) {
     let obfuscatedFileKey = obfuscateFileKey(key, nonce, condensedMac);
 
     const cipher = createCipheriv('aes-128-ecb', store.masterKey, '').setAutoPadding(false);
-    const encryptedMasterKey = Buffer.concat([cipher.update(obfuscatedFileKey), cipher.final()]);
+    const encryptedObfuscatedFileKey = Buffer.concat([cipher.update(obfuscatedFileKey), cipher.final()]);
 
-    fs.writeFileSync(destination + '.key', encryptedMasterKey);
+    fs.writeFileSync(destination + '.key', encryptedObfuscatedFileKey);
 }
 
 /**
@@ -80,12 +80,15 @@ module.exports = function (vorpal, options) {
         const input = path.isAbsolute(args.input) ? args.input : path.join(store.localFolder, args.input);
         const outputArg = args.output || input + '.enc';
         const output = path.isAbsolute(outputArg) ? outputArg : path.join(store.localFolder, outputArg);
-        this.log('Encrypting file "' + input + '" and saving result as "' + output + '".')
+
+        let relativeInput = path.relative(store.localFolder, input);
+        let relativeOutput = path.relative(store.localFolder, output);
+        this.log('Encrypting file "' + relativeInput + '" and saving result as "' + relativeOutput + '"...');
         try {
             encrypt(input, output);
             this.log('Done');
         } catch (err) {
-            this.log('Error while encrypting:' + err.toString());
+            this.log('Error while encrypting: ' + err.toString());
         }
     });
 };
