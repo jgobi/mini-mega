@@ -20,7 +20,7 @@ router.post('/create', authMiddleware, (req, res) => {
         if (fieldName === 'info_file')
             file.pipe(fs.createWriteStream(path.join(__dirname, '..', 'files', handler+'.info')))
         else if (fieldName === 'file')
-            file.pipe(fs.createWriteStream(path.join(__dirname, '..', 'files', handler+'.enc')))
+            file.pipe(fs.createWriteStream(path.join(__dirname, '..', 'files', handler)))
     });
     busboy.on('field', function(fieldName, val, fieldnameTruncated, valTruncated, encoding, mimetype) {
         if (fieldName === 'key')
@@ -64,7 +64,18 @@ router.get('/info/:handler', authMiddleware, async (req, res) => {
     } catch (err) {
         return res.status(404).json({ error: 'Not found' });
     }
+});
 
+
+router.get('/download/:handler', authMiddleware, async (req, res) => {
+    let { handler } = req.params;
+    try {
+        let userFile = await File.get(handler, req.user.uuid);
+        if (userFile) return res.download(path.join(__dirname, '..', 'files', handler));
+        else throw new Error();
+    } catch (err) {
+        return res.status(404).json({ error: 'Not found' });
+    }
 });
 
 module.exports = router;
