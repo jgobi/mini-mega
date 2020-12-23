@@ -1,14 +1,6 @@
-const camelCase = require('camelcase');
 const { randomBytes } = require('crypto');
 const db = require('../index');
-
-function objectPropsToCamelCase(object) {
-    let newObject = {};
-    for (let key in object) {
-        newObject[camelCase(key)] = object[key];
-    }
-    return newObject;
-}
+const { objectPropsToCamelCase } = require('../../helpers/common');
 
 /**
  * 
@@ -68,7 +60,7 @@ function getAll () {
 
 function getBySession (session) {
     return new Promise((resolve, reject) => {
-        db.get('select * from session s where id = ? inner join user u on u.uuid = s.user_uuid', [session], (err, row) => {
+        db.get('select * from session s inner join user u on u.uuid = s.user_uuid where id = ?', [session], (err, row) => {
             if (err) reject(err)
             else resolve(row ? objectPropsToCamelCase(row) : null);
         })

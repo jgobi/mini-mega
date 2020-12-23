@@ -1,15 +1,16 @@
 // Info file format version 1
-// v|size|r|n|filename.
-// .|nmac|concmacs.|xx|
+// 0 1 2 3 4 5 6 7 8 9 a b c d e f
+// v|s i z e|r|n|f i l e n a m e .
+// .|n m|c o n c m a c s . .|x x x
 // 
 // v = version (1) - 1 byte
 // size = floor(file size / 16) - UInt32 (4 bytes)
 // r = file size % 16 - 1 byte
 // n = file name size - 1 byte unsigned
-// filename..... = utf-8 encoded string (n bytes)
-// nmac = number of macs in file - UInt32 (4 bytes)
-// concmacs = concatenated macs (nmac * 16 bytes)
-// xx = 0 padding until info file size is multiple of 16
+// filename.. = utf-8 encoded string (n bytes)
+// nm = number of macs in file - UInt16 (2 bytes)
+// concmacs.. = concatenated macs (nm * 16 bytes)
+// xxx = 0 padding until info file size is multiple of 16
 
 
 /**
@@ -24,7 +25,7 @@ function encodeInfoFileV1(fileSize, fileName, macs) {
     const fileSize16 = Math.floor(fileSize / 16);
     const remainder = fileSize % 16;
 
-    const fileInfoSize = 11 + fileName.length + 16*macs.length;
+    const fileInfoSize = 9 + fileName.length + 16*macs.length;
     const paddingInfoSize = fileInfoSize % 16 === 0 ? 0 : 16 - fileInfoSize % 16;
 
     let infoFile = Buffer.allocUnsafe(fileInfoSize + paddingInfoSize);
@@ -34,8 +35,8 @@ function encodeInfoFileV1(fileSize, fileName, macs) {
     infoFile.writeUInt8(remainder, 5); // r
     infoFile.writeUInt8(fileName.length, 6); // n
     infoFile.set(fileName, 7); // filename
-    infoFile.writeUInt32BE(macs.length, 7 + fileName.length); // nmac
-    let macsStart = 11 + fileName.length;
+    infoFile.writeUInt16BE(macs.length, 7 + fileName.length); // nm
+    let macsStart = 9 + fileName.length;
     for (let i in macs) {
         infoFile.set(macs[i], macsStart + i*16); // concmacs
     }
@@ -56,9 +57,9 @@ function decodeInfoFileV1(file) {
     const fileNameSize = file.readUInt8(6); // n
     const fileName = file.slice(7, 7 + fileNameSize).toString('utf-8'); // filename
     
-    const nMacs = file.readUInt32BE(7 + fileNameSize); // nmac
+    const nMacs = file.readUInt16BE(7 + fileNameSize); // nmac
     const macs = [];
-    let macsStart = 11 + fileNameSize;
+    let macsStart = 9 + fileNameSize;
     for (let i = 0; i < nMacs; i++) {
         macs.push(file.slice(macsStart + i*16, macsStart + (i+1)*16)); // concmacs
     }

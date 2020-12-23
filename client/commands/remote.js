@@ -1,6 +1,9 @@
 const store = require('../store');
+const axios = require('axios').default;
 const fs = require('fs');
 const path = require('path');
+
+const API_BASE = process.env.API_BASE;
 
 // A BIG TODO FOR ALL THIS FILE CAUSE I'M LAZY RIGHT NOW
 
@@ -9,6 +12,18 @@ const path = require('path');
  * @param {any} options 
  */
 module.exports = function (vorpal, options) {
+    vorpal
+    .command('rl', 'Show files on remote the lazy way')
+    .action(async function(args) {
+        let res = await axios.get(API_BASE + '/file/list', {
+            headers: {
+                'Authorization': 'Bearer ' + store.sessionIdentifier,
+            }
+        });
+        let files = res.data.map(a => a.fileHandler);
+        this.log(files.join('\n'), '\n');
+    });
+
     vorpal
     .command('rls [dir]', 'List files in remote directory')
     .action(async function (args) {

@@ -18,9 +18,33 @@ process.env.PBKDF2_COST = 10000;
 
 const { readFileSync } = require('fs');
 const path = require('path');
+const fs = require('fs');
 const store = require('./store');
 
 store.localFolder = process.cwd();
+
+try {
+    fs.mkdirSync(path.join(__dirname, '.tmp'));
+} catch (err) {
+    if (err.code !== 'EEXIST') {
+        console.error('Cannot create .tmp directory, exiting...');
+        process.exit(1);
+    } else if (!fs.statSync(path.join(__dirname, '.tmp')).isDirectory()) {
+        console.error('Cannot create .tmp directory, file with same name already exists, exiting...');
+        process.exit(1);
+    }
+}
+try {
+    fs.mkdirSync(path.join(__dirname, '.store'));
+} catch (err) {
+    if (err.code !== 'EEXIST') {
+        console.error('Cannot create .store directory, exiting...');
+        process.exit(1);
+    } else if (!fs.statSync(path.join(__dirname, '.store')).isDirectory()) {
+        console.error('Cannot create .store directory, file with same name already exists, exiting...');
+        process.exit(1);
+    }
+}
 
 try {
     let { name, masterKey, rsaPrivateKey, sessionIdentifier } = JSON.parse(readFileSync(path.join(__dirname, '.credentials.json'), 'utf-8'));
