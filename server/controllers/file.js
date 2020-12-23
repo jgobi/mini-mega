@@ -12,7 +12,7 @@ let router = Router();
 const File = require('../database/models/File');
 
 router.post('/create', authMiddleware, (req, res) => {
-    let handler = crypto.randomBytes(9).toString('base64').replace(/\+/g, '-').replace(/\//, '_');
+    let handler = crypto.randomBytes(9).toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
     
     var busboy = new Busboy({ headers: req.headers });
     let key = '';
