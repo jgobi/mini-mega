@@ -52,7 +52,8 @@ module.exports = function (vorpal, options) {
         const { key } = deobfuscateFileKey(obfuscatedFileKey);
 
         let info = decodeInfoFileV1(decryptInfo(res.data, key));
-        this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\n');
+        let shareLink = 'mini-mega://' + file + '#' + obfuscatedFileKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').substr(0, 43);
+        this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nShare link: ', shareLink, '\n');
     });
 
     vorpal
