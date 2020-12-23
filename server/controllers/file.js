@@ -43,8 +43,8 @@ router.post('/link', authMiddleware, defaultRoute(async req => {
     return { handler };
 }));
 
-router.post('/unlink', authMiddleware, defaultRoute(async req => {
-    let { handler } = req.body;
+router.delete('/unlink/:handler', authMiddleware, defaultRoute(async req => {
+    let { handler } = req.params;
     if (!handler) return new HttpError(400, 'Invalid handler')
     await File.unlink(handler, req.user.uuid);
     return { handler };

@@ -1,11 +1,17 @@
 const store = require('../store');
 const axios = require('axios').default;
-const fs = require('fs');
 const path = require('path');
+const { decodeInfoFileV1 } = require('../helpers/infoFile');
+const { decryptInfo } = require('../helpers/decrypt');
+const { createDecipheriv } = require('crypto');
+const { deobfuscateFileKey } = require('../helpers/keys');
 
 const API_BASE = process.env.API_BASE;
 
 // A BIG TODO FOR ALL THIS FILE CAUSE I'M LAZY RIGHT NOW
+
+let files = [];
+let fn = []
 
 /**
  * @param {import('@types/vorpal')} vorpal 
@@ -20,8 +26,60 @@ module.exports = function (vorpal, options) {
                 'Authorization': 'Bearer ' + store.sessionIdentifier,
             }
         });
-        let files = res.data.map(a => a.fileHandler);
-        this.log(files.join('\n'), '\n');
+        files = res.data;
+        fn = files.map(a => a.fileHandler);
+        this.log(fn.join('\n'), '\n');
+    });
+
+    vorpal
+    .command('info <hash>', 'Show info about a file on remote')
+    .autocomplete({
+        data: () => fn
+    })
+    .action(async function(args) {
+        let file = args.hash;
+        if (!fn.includes(file)) return this.log('Not found, run rl to update.');
+        let res = await axios.get(API_BASE + '/file/info/' + file, {
+            headers: {
+                'Authorization': 'Bearer ' + store.sessionIdentifier,
+            },
+            responseType: 'arraybuffer'
+        });
+        let encryptedObfuscatedFileKey = files.find(f => f.fileHandler === file).encryptedFileKey;
+
+        const decipher = createDecipheriv('aes-128-ecb', store.masterKey, '').setAutoPadding(false);
+        const obfuscatedFileKey = Buffer.concat([decipher.update(Buffer.from(encryptedObfuscatedFileKey, 'base64')), decipher.final()]);
+        const { key } = deobfuscateFileKey(obfuscatedFileKey);
+
+        let info = decodeInfoFileV1(decryptInfo(res.data, key));
+        this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\n');
+    });
+
+    vorpal
+    .command('unlink <hash>', 'Delete a file on remote')
+    .autocomplete({
+        data: () => fn
+    })
+    .action(async function(args) {
+        let file = args.hash;
+        let idx = fn.findIndex( f=> f === file);
+        if (idx < 0) return this.log('Not found, run rl to update.');
+        const { confirm } = await this.prompt({
+            name: 'confirm',
+            type: 'confirm',
+            message: 'Are you sure? ',
+            default: false,
+        });
+        if (!confirm) return;
+
+        await axios.delete(API_BASE + '/file/unlink/' + file, {
+            headers: {
+                'Authorization': 'Bearer ' + store.sessionIdentifier,
+            }
+        });
+        files.splice(idx, 1);
+        fn.splice(idx, 1);
+        this.log('Done deleting.\n');
     });
 
     vorpal
