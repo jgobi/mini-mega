@@ -116,7 +116,7 @@ Flight::route('GET /api/file/download/@handler', function ($handler) {
 
     if (file_exists($file)) {
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename=' . $handler . '.info');
+        header('Content-Disposition: attachment; filename=' . $handler);
         header('Content-Transfer-Encoding: binary');
         header('Cache-Control: public, max-age=15552000');
         header('Content-Length: ' . filesize($file));
