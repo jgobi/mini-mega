@@ -24,7 +24,7 @@ module.exports = function (vorpal, options) {
     })
     .action(async function(args) {
         let file = args.hash;
-
+        if (!store.files.find(a => a.fileHandler == file)) return this.log('Not found, run rl to update.');
 
         let { encryptedFileKey } = (await axios.get(API_BASE + '/file/key/' + file, {
             headers: {

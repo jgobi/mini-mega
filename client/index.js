@@ -14,7 +14,7 @@ require('vorpal').prototype._init = function () {
 // == END OF VORPAL HACK FOR WORKING MULTIPLE INSTANCES OF VORPAL ==
 
 process.env.API_BASE = 'http://localhost:3030/api';
-process.env.PBKDF2_COST = 10000;
+process.env.PBKDF2_COST = 100000;
 
 const fs = require('fs');
 const store = require('./store');
