@@ -1,0 +1,14 @@
+{
+    "name": "mini-mega/php-server",
+    "type": "project",
+    "authors": [
+        {
+            "name": "João Gabriel",
+            "email": "joaogabrieloliveira9@gmail.com"
+        }
+    ],
+    "require": {
+        "mikecao/flight": "^1.3",
+        "symfony/dotenv": "^5.2"
+    }
+}
