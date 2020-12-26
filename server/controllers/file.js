@@ -55,10 +55,10 @@ router.get('/list', authMiddleware, defaultRoute(req => {
     return File.getAllByUser(req.user.uuid);
 }));
 
-router.get('/info/:handler', authMiddleware, async (req, res) => {
+router.get('/info/:handler', async (req, res) => {
     let { handler } = req.params;
     try {
-        let userFile = await File.get(handler, req.user.uuid);
+        let userFile = await File.get(handler);
         if (userFile) return res.download(path.join(__dirname, '..', 'files', handler + '.info'));
         else throw new Error();
     } catch (err) {
@@ -67,10 +67,10 @@ router.get('/info/:handler', authMiddleware, async (req, res) => {
 });
 
 
-router.get('/download/:handler', authMiddleware, async (req, res) => {
+router.get('/download/:handler', async (req, res) => {
     let { handler } = req.params;
     try {
-        let userFile = await File.get(handler, req.user.uuid);
+        let userFile = await File.get(handler);
         if (userFile) return res.download(path.join(__dirname, '..', 'files', handler));
         else throw new Error();
     } catch (err) {

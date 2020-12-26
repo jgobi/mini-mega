@@ -40,9 +40,6 @@ module.exports = function (vorpal, options) {
         let file = args.hash;
         if (!fn.includes(file)) return this.log('Not found, run rl to update.');
         let res = await axios.get(API_BASE + '/file/info/' + file, {
-            headers: {
-                'Authorization': 'Bearer ' + store.sessionIdentifier,
-            },
             responseType: 'arraybuffer'
         });
         let encryptedObfuscatedFileKey = files.find(f => f.fileHandler === file).encryptedFileKey;

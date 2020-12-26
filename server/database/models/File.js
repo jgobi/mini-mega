@@ -53,11 +53,11 @@ function getAllByUser (userUuid) {
 
 /**
  * 
- * @param {string} userUuid 
+ * @param {string} fileHandler 
  */
-function get (fileHandler, userUuid) {
+function get (fileHandler) {
     return new Promise((resolve, reject) => {
-        db.get('select * from user_file where file_handler = ? and user_uuid = ?', [fileHandler, userUuid], (err, row) => {
+        db.get('select file_handler as "fileHandler" from user_file where file_handler = ? limit 1', [fileHandler], (err, row) => {
             if (err) reject(err)
             else resolve(row);
         });
