@@ -50,7 +50,7 @@ Flight::route('POST /api/file/link', function () {
 });
 
 
-Flight::route('POST /api/file/unlink/@handler', function ($handler) {
+Flight::route('DELETE /api/file/unlink/@handler', function ($handler) {
     $db = Flight::db();
     $user = auth_user();
 
@@ -58,11 +58,21 @@ Flight::route('POST /api/file/unlink/@handler', function ($handler) {
 
     $stmt = $db->prepare("DELETE FROM user_file WHERE file_handler = :f AND user_uuid = :u");
     $stmt->execute(array(
-        'f' => $input['handler'],
+        'f' => $handler,
         'u' => $user['uuid']
     ));
 
-    Flight::json(array( 'handler' => $input['handler'] ));
+    $file = __DIR__ . '/../files/' . $handler;
+
+    $stmt2 = $db->prepare("SELECT count(*) AS c FROM user_file WHERE file_handler = :f");
+    $stmt2->execute(array( 'f' => $handler ));
+    $row = $stmt2->fetch(PDO::FETCH_ASSOC);
+    if ($row['c'] == 0) {
+        unlink($file);
+        unlink($file . '.info');
+    }
+
+    Flight::json(array( 'handler' => $handler ));
 });
 
 
