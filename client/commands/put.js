@@ -86,7 +86,7 @@ module.exports = function (vorpal, options) {
     })
     .action(async function(args) {
         const input = path.isAbsolute(args.file) ? args.file : path.join(store.localFolder, args.file);
-        const output = path.join(__dirname, '..', '.tmp', randomBytes(9).toString('base64'));
+        const output = path.join(__dirname, '..', '.tmp', randomBytes(9).toString('base64').replace(/\+/g, '-').replace(/\//g, '_'));
 
         let relativeInput = path.relative(store.localFolder, input);
         this.log('Encrypting file "' + relativeInput + '...');
