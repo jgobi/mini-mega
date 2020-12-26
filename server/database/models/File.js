@@ -64,9 +64,23 @@ function get (fileHandler) {
     });
 }
 
+/**
+ * 
+ * @param {string} fileHandler 
+ */
+function isReferenced (fileHandler) {
+    return new Promise((resolve, reject) => {
+        db.get('select count(*) as c from user_file where file_handler = ?', [fileHandler], (err, row) => {
+            if (err) reject(err)
+            else resolve(row.c > 0);
+        });
+    });
+}
+
 module.exports = {
     link,
     unlink,
     getAllByUser,
     get,
+    isReferenced,
 };

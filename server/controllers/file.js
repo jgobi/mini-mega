@@ -47,6 +47,12 @@ router.delete('/unlink/:handler', authMiddleware, defaultRoute(async req => {
     let { handler } = req.params;
     if (!handler) return new HttpError(400, 'Invalid handler')
     await File.unlink(handler, req.user.uuid);
+
+    if (!(await File.isReferenced(handler))) {
+        const file = path.join(__dirname, '..', 'files', handler);
+        fs.unlinkSync(file);
+        fs.unlinkSync(file + '.info');
+    }
     return { handler };
 }));
 
