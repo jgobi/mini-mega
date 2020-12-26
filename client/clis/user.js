@@ -8,5 +8,6 @@ vorpal.use(require('../commands/remote'));
 vorpal.use(require('../commands/encrypt'));
 vorpal.use(require('../commands/decrypt'));
 vorpal.use(require('../commands/put'));
+vorpal.use(require('../commands/download'));
 
 module.exports = vorpal;
