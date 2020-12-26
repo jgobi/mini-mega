@@ -6,10 +6,10 @@ module.exports = {
         return new Promise(resolve => {
             db.serialize(() => {
                 db.run(`create table user_file (
-                    file_handler text,
+                    file_handler text not null,
                     user_uuid text not null,
                     encrypted_file_key text not null,
-                    unique (file_handler, user_uuid),
+                    primary key (file_handler, user_uuid),
                     foreign key (user_uuid) references user (uuid)
                 )`, () => resolve());
             });

@@ -17,7 +17,7 @@ const { objectPropsToCamelCase } = require('../../helpers/common');
  */
 function create (user) {
     return new Promise ((resolve, reject) => {
-        const uuid = randomBytes(18).toString('base64');
+        const uuid = randomBytes(16).toString('base64').substr(0, 22);
         db.run(`insert into user (
             uuid, name, email, client_random_value, encrypted_master_key,
             hashed_auth_key, public_rsa_key, encrypted_rsa_private_key,
