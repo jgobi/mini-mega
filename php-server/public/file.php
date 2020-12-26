@@ -73,7 +73,7 @@ Flight::route('GET /api/file/info/@handler', function ($handler) {
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename=' . $handler . '.info');
         header('Content-Transfer-Encoding: binary');
-        header('Cache-Control: private, max-age=15552000');
+        header('Cache-Control: public, max-age=15552000');
         header('Content-Length: ' . filesize($file));
         ob_clean();
         flush();
@@ -91,7 +91,7 @@ Flight::route('GET /api/file/download/@handler', function ($handler) {
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename=' . $handler . '.info');
         header('Content-Transfer-Encoding: binary');
-        header('Cache-Control: private, max-age=15552000');
+        header('Cache-Control: public, max-age=15552000');
         header('Content-Length: ' . filesize($file));
         ob_clean();
         flush();
