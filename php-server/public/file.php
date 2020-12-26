@@ -76,6 +76,23 @@ Flight::route('DELETE /api/file/unlink/@handler', function ($handler) {
 });
 
 
+Flight::route('GET /api/file/key/@handler', function ($handler) {
+    $db = Flight::db();
+    $user = auth_user();
+
+    if ($user == FALSE) return;
+
+    $stmt = $db->prepare("SELECT * FROM user_file WHERE file_handler = :f AND user_uuid = :u LIMIT 1");
+    $stmt->execute(array(
+        'f' => $handler,
+        'u' => $user['uuid']
+    ));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    Flight::json(array( 'encryptedFileKey' => $row['encrypted_file_key'] ));
+});
+
+
 Flight::route('GET /api/file/info/@handler', function ($handler) {
     $file = __DIR__ . '/../files/' . $handler . '.info';
 

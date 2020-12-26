@@ -54,12 +54,13 @@ function getAllByUser (userUuid) {
 /**
  * 
  * @param {string} fileHandler 
+ * @param {string} userUuid 
  */
-function get (fileHandler) {
+function get (fileHandler, userUuid) {
     return new Promise((resolve, reject) => {
-        db.get('select file_handler as "fileHandler" from user_file where file_handler = ? limit 1', [fileHandler], (err, row) => {
+        db.get('select * from user_file where file_handler = ? and user_uuid = ?', [fileHandler, userUuid], (err, row) => {
             if (err) reject(err)
-            else resolve(row);
+            else resolve(objectPropsToCamelCase(row));
         });
     });
 }
@@ -78,9 +79,9 @@ function isReferenced (fileHandler) {
 }
 
 module.exports = {
+    get,
     link,
     unlink,
     getAllByUser,
-    get,
     isReferenced,
 };
