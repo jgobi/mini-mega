@@ -2,6 +2,7 @@ const store = require('../store');
 const axios = require('axios').default;
 const path = require('path');
 const fs = require('fs');
+const { createDecipheriv } = require('crypto');
 const { decodeInfoFileV1 } = require('../helpers/infoFile');
 const { readFileChunk } = require('../helpers/readFile');
 const { decryptInfo, decryptChunk } = require('../helpers/decrypt');
@@ -17,16 +18,30 @@ const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
  */
 module.exports = function (vorpal, options) {
     vorpal
-    .command('download <link>', 'Download a file via public shared link')
+    .command('get <hash>', 'Download a file via hash')
+    .autocomplete({
+      data: () => store.files.map(a => a.fileHandler)
+    })
     .action(async function(args) {
-        let [_, url] = args.link.split('://');
-        let [file, obfuscatedFileKey] = url.split('#');
+        let file = args.hash;
 
+
+        let { encryptedFileKey } = (await axios.get(API_BASE + '/file/key/' + file, {
+            headers: {
+                'Authorization': 'Bearer ' + store.sessionIdentifier,
+            }
+        })).data;
+
+        if (!encryptedFileKey) return this.log('Failed to retrieve encrypted file key.');
+
+        const decipher = createDecipheriv('aes-128-ecb', store.masterKey, '').setAutoPadding(false);
+        const obfuscatedFileKey = Buffer.concat([decipher.update(Buffer.from(encryptedFileKey, 'base64')), decipher.final()]);
+        
         let res = await axios.get(API_BASE + '/file/info/' + file, {
             responseType: 'arraybuffer'
         });
-
-        const { key, nonce } = deobfuscateFileKey(Buffer.from(obfuscatedFileKey, 'base64'));
+        
+        const { key, nonce } = deobfuscateFileKey(obfuscatedFileKey);
 
         let info = decodeInfoFileV1(decryptInfo(res.data, key));
         this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nDownloading...');

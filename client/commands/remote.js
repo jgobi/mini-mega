@@ -10,9 +10,6 @@ const API_BASE = process.env.API_BASE;
 
 // A BIG TODO FOR ALL THIS FILE CAUSE I'M LAZY RIGHT NOW
 
-let files = [];
-let fn = []
-
 /**
  * @param {import('@types/vorpal')} vorpal 
  * @param {any} options 
@@ -26,23 +23,22 @@ module.exports = function (vorpal, options) {
                 'Authorization': 'Bearer ' + store.sessionIdentifier,
             }
         });
-        files = res.data;
-        fn = files.map(a => a.fileHandler);
-        this.log(fn.join('\n'), '\n');
+        store.files = res.data;
+        this.log(store.files.map(a => a.fileHandler).join('\n'), '\n');
     });
 
     vorpal
     .command('info <hash>', 'Show info about a file on remote')
     .autocomplete({
-        data: () => fn
+        data: () => store.files.map(a => a.fileHandler)
     })
     .action(async function(args) {
         let file = args.hash;
-        if (!fn.includes(file)) return this.log('Not found, run rl to update.');
+        if (!store.files.find(a => a.fileHandler == file)) return this.log('Not found, run rl to update.');
         let res = await axios.get(API_BASE + '/file/info/' + file, {
             responseType: 'arraybuffer'
         });
-        let encryptedObfuscatedFileKey = files.find(f => f.fileHandler === file).encryptedFileKey;
+        let encryptedObfuscatedFileKey = store.files.find(f => f.fileHandler === file).encryptedFileKey;
 
         const decipher = createDecipheriv('aes-128-ecb', store.masterKey, '').setAutoPadding(false);
         const obfuscatedFileKey = Buffer.concat([decipher.update(Buffer.from(encryptedObfuscatedFileKey, 'base64')), decipher.final()]);
@@ -56,11 +52,11 @@ module.exports = function (vorpal, options) {
     vorpal
     .command('unlink <hash>', 'Delete a file on remote')
     .autocomplete({
-        data: () => fn
+        data: () => store.files.map(a => a.fileHandler)
     })
     .action(async function(args) {
         let file = args.hash;
-        let idx = fn.findIndex( f=> f === file);
+        let idx = store.files.findIndex(f => f.fileHandler === file);
         if (idx < 0) return this.log('Not found, run rl to update.');
         const { confirm } = await this.prompt({
             name: 'confirm',
@@ -75,8 +71,7 @@ module.exports = function (vorpal, options) {
                 'Authorization': 'Bearer ' + store.sessionIdentifier,
             }
         });
-        files.splice(idx, 1);
-        fn.splice(idx, 1);
+        store.files.splice(idx, 1);
         this.log('Done deleting.\n');
     });
 

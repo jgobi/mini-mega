@@ -23,6 +23,7 @@ module.exports = function (vorpal, options) {
         store.masterKey = null;
         store.rsaPrivateKey = '';
         store.sessionIdentifier = '';
+        store.files = [];
         try {
             unlinkSync(path.join(__dirname, '..', '.credentials.json'));
         } catch (err) {}
@@ -42,10 +43,6 @@ module.exports = function (vorpal, options) {
             try {
                 await axios.post(API_BASE + '/user/logout', { sessionIdentifier: store.sessionIdentifier });
             } catch (e) {}
-            store.name = '';
-            store.masterKey = null;
-            store.rsaPrivateKey = '';
-            store.sessionIdentifier = '';
             this.log('Disconnected');
         }
         process.exit(0);

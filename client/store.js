@@ -7,4 +7,5 @@ module.exports = {
     prompt: '',
     localFolder: './',
     remoteFolder: '/',
+    files: [],
 };
