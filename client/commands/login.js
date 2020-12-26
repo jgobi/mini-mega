@@ -2,7 +2,6 @@ const { pbkdf2, createDecipheriv, privateDecrypt } = require('crypto');
 const store = require('../store');
 const axios = require('axios').default;
 const { writeFileSync } = require('fs');
-const path = require('path');
 
 const API_BASE = process.env.API_BASE;
 const PBKDF2_COST = +process.env.PBKDF2_COST;
@@ -94,7 +93,7 @@ module.exports = function (vorpal, options) {
         });
 
         store.stay = stay;
-        if (stay) writeFileSync(path.join(__dirname, '..', '.credentials.json'), JSON.stringify({
+        if (stay) writeFileSync(store.CREDENTIALS_FILE, JSON.stringify({
             name,
             masterKey: masterKey.toString('base64'),
             rsaPrivateKey,

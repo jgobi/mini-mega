@@ -16,38 +16,36 @@ require('vorpal').prototype._init = function () {
 process.env.API_BASE = 'http://localhost:3030/api';
 process.env.PBKDF2_COST = 10000;
 
-const { readFileSync } = require('fs');
-const path = require('path');
 const fs = require('fs');
 const store = require('./store');
 
 store.localFolder = process.cwd();
 
 try {
-    fs.mkdirSync(path.join(__dirname, '.tmp'));
+    fs.mkdirSync(store.TMP_PATH, { recursive: true });
 } catch (err) {
     if (err.code !== 'EEXIST') {
         console.error('Cannot create .tmp directory, exiting...');
         process.exit(1);
-    } else if (!fs.statSync(path.join(__dirname, '.tmp')).isDirectory()) {
+    } else if (!fs.statSync(store.TMP_PATH).isDirectory()) {
         console.error('Cannot create .tmp directory, file with same name already exists, exiting...');
         process.exit(1);
     }
 }
 try {
-    fs.mkdirSync(path.join(__dirname, '.store'));
+    fs.mkdirSync(store.STORE_PATH, { recursive: true });
 } catch (err) {
     if (err.code !== 'EEXIST') {
         console.error('Cannot create .store directory, exiting...');
         process.exit(1);
-    } else if (!fs.statSync(path.join(__dirname, '.store')).isDirectory()) {
+    } else if (!fs.statSync(store.STORE_PATH).isDirectory()) {
         console.error('Cannot create .store directory, file with same name already exists, exiting...');
         process.exit(1);
     }
 }
 
 try {
-    let { name, masterKey, rsaPrivateKey, sessionIdentifier } = JSON.parse(readFileSync(path.join(__dirname, '.credentials.json'), 'utf-8'));
+    let { name, masterKey, rsaPrivateKey, sessionIdentifier } = JSON.parse(fs.readFileSync(store.CREDENTIALS_FILE, 'utf-8'));
     
     store.name = name;
     store.masterKey = Buffer.from(masterKey, 'base64');

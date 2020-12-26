@@ -46,7 +46,7 @@ module.exports = function (vorpal, options) {
         let info = decodeInfoFileV1(decryptInfo(res.data, key));
         this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nDownloading...');
 
-        let encFilePath = path.join(__dirname, '..', '.tmp', file);
+        let encFilePath = path.join(store.TMP_PATH, file);
         await downloadFile(API_BASE + '/file/download/' + file, encFilePath);
 
         this.log('Decrypting file...')

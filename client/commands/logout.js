@@ -1,7 +1,6 @@
 const store = require('../store');
 const axios = require('axios').default;
 const { unlinkSync } = require('fs');
-const path = require('path');
 
 const API_BASE = process.env.API_BASE;
 
@@ -25,7 +24,7 @@ module.exports = function (vorpal, options) {
         store.sessionIdentifier = '';
         store.files = [];
         try {
-            unlinkSync(path.join(__dirname, '..', '.credentials.json'));
+            unlinkSync(store.CREDENTIALS_FILE);
         } catch (err) {}
         this.log('Disconnected');
 
