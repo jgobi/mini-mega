@@ -76,11 +76,10 @@ module.exports = function (vorpal, options) {
         const { error, name, encryptedMasterKey, encryptedRsaPrivateKey, encryptedSessionIdentifier } = ans2.data;
         if (error) return this.log('Authentication failed: ', error);
 
-        const { masterKey, rsaPrivateKey, sessionIdentifier } = login2(encryptionKey, encryptedMasterKey, encryptedRsaPrivateKey, encryptedSessionIdentifier);
+        const { masterKey, sessionIdentifier } = login2(encryptionKey, encryptedMasterKey, encryptedRsaPrivateKey, encryptedSessionIdentifier);
 
         store.name = name;
         store.masterKey = masterKey;
-        store.rsaPrivateKey = rsaPrivateKey;
         store.sessionIdentifier = sessionIdentifier;
 
         this.log('Authenticated as ' + name);
@@ -96,7 +95,6 @@ module.exports = function (vorpal, options) {
         if (stay) writeFileSync(store.CREDENTIALS_FILE, JSON.stringify({
             name,
             masterKey: masterKey.toString('base64'),
-            rsaPrivateKey,
             sessionIdentifier,
         }));
 

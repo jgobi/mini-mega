@@ -20,7 +20,6 @@ module.exports = function (vorpal, options) {
         } catch (e) {}
         store.name = '';
         store.masterKey = null;
-        store.rsaPrivateKey = '';
         store.sessionIdentifier = '';
         store.files = [];
         try {

@@ -1,13 +1,12 @@
 const store = require('../store');
-const axios = require('axios').default;
 const path = require('path');
 const fs = require('fs');
-const { createDecipheriv } = require('crypto');
 const { decodeInfoFileV1 } = require('../helpers/infoFile');
 const { readFileChunk } = require('../helpers/readFile');
 const { decryptInfo, decryptChunk } = require('../helpers/decrypt');
 const { deobfuscateFileKey } = require('../helpers/keys');
 const { downloadFile } = require('../helpers/download');
+const { INFO_STORE_PATH } = require('../store');
 
 const API_BASE = process.env.API_BASE;
 const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
@@ -24,26 +23,12 @@ module.exports = function (vorpal, options) {
     })
     .action(async function(args) {
         let file = args.hash;
-        if (!store.files.find(a => a.fileHandler == file)) return this.log('Not found, run rl to update.');
+        let storeFile = store.files.find(a => a.fileHandler === file);
+        if (!storeFile) return this.log('Not found, run rl to update.');
 
-        let { encryptedFileKey } = (await axios.get(API_BASE + '/file/key/' + file, {
-            headers: {
-                'Authorization': 'Bearer ' + store.sessionIdentifier,
-            }
-        })).data;
+        const { key, nonce } = deobfuscateFileKey(storeFile.obfuscatedFileKey);
 
-        if (!encryptedFileKey) return this.log('Failed to retrieve encrypted file key.');
-
-        const decipher = createDecipheriv('aes-128-ecb', store.masterKey, '').setAutoPadding(false);
-        const obfuscatedFileKey = Buffer.concat([decipher.update(Buffer.from(encryptedFileKey, 'base64')), decipher.final()]);
-        
-        let res = await axios.get(API_BASE + '/file/info/' + file, {
-            responseType: 'arraybuffer'
-        });
-        
-        const { key, nonce } = deobfuscateFileKey(obfuscatedFileKey);
-
-        let info = decodeInfoFileV1(decryptInfo(res.data, key));
+        let info = decodeInfoFileV1(decryptInfo(fs.readFileSync(path.join(INFO_STORE_PATH, file)), key));
         this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nDownloading...');
 
         let encFilePath = path.join(store.TMP_PATH, file);

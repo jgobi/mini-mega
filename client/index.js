@@ -13,49 +13,33 @@ require('vorpal').prototype._init = function () {
 };
 // == END OF VORPAL HACK FOR WORKING MULTIPLE INSTANCES OF VORPAL ==
 
-process.env.API_BASE = 'http://localhost:3030/api';
+process.env.API_BASE = 'https://minicloud.ga/api';
 process.env.PBKDF2_COST = 100000;
 
 const fs = require('fs');
+const { createFolders } = require('./helpers/folders');
 const store = require('./store');
 
 store.localFolder = process.cwd();
 
-try {
-    fs.mkdirSync(store.TMP_PATH, { recursive: true });
-} catch (err) {
-    if (err.code !== 'EEXIST') {
-        console.error('Cannot create .tmp directory, exiting...');
-        process.exit(1);
-    } else if (!fs.statSync(store.TMP_PATH).isDirectory()) {
-        console.error('Cannot create .tmp directory, file with same name already exists, exiting...');
-        process.exit(1);
-    }
-}
-try {
-    fs.mkdirSync(store.STORE_PATH, { recursive: true });
-} catch (err) {
-    if (err.code !== 'EEXIST') {
-        console.error('Cannot create .store directory, exiting...');
-        process.exit(1);
-    } else if (!fs.statSync(store.STORE_PATH).isDirectory()) {
-        console.error('Cannot create .store directory, file with same name already exists, exiting...');
-        process.exit(1);
-    }
-}
+createFolders([store.TMP_PATH, store.STORE_PATH, store.INFO_STORE_PATH]);
 
 try {
-    let { name, masterKey, rsaPrivateKey, sessionIdentifier } = JSON.parse(fs.readFileSync(store.CREDENTIALS_FILE, 'utf-8'));
+    let { name, masterKey, sessionIdentifier } = JSON.parse(fs.readFileSync(store.CREDENTIALS_FILE, 'utf-8'));
     
     store.name = name;
     store.masterKey = Buffer.from(masterKey, 'base64');
-    store.rsaPrivateKey = rsaPrivateKey;
     store.sessionIdentifier = sessionIdentifier;
     store.stay = true;
 
     store.prompt = name + '@mini-mega$';
     require('./clis/user').delimiter('Local: ' + store.localFolder + '\t' + 'Remote: ' + store.remoteFolder + '\n' + store.prompt).show();
 } catch (err) {
-    store.prompt = 'guest@mini-mega$';
-    require('./clis/main').delimiter('Local: ' + store.localFolder + '\t' + 'Remote: ' + store.remoteFolder + '\n' + store.prompt).show();
+    if (err.code === 'ENOENT') {
+        store.prompt = 'guest@mini-mega$';
+        require('./clis/main').delimiter('Local: ' + store.localFolder + '\t' + 'Remote: ' + store.remoteFolder + '\n' + store.prompt).show();
+    } else {
+        console.error(err);
+        process.exit(2);
+    }
 }
