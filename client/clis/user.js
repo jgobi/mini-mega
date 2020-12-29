@@ -10,5 +10,6 @@ vorpal.use(require('../commands/decrypt'));
 vorpal.use(require('../commands/put'));
 vorpal.use(require('../commands/get'));
 vorpal.use(require('../commands/download'));
+vorpal.use(require('../commands/link'));
 
 module.exports = vorpal;

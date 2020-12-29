@@ -7,6 +7,7 @@ const { decryptInfo, decryptChunk } = require('../helpers/decrypt');
 const { deobfuscateFileKey } = require('../helpers/keys');
 const { downloadFile } = require('../helpers/download');
 const { INFO_STORE_PATH } = require('../store');
+const readableSize = require('../helpers/readableSize');
 
 const API_BASE = process.env.API_BASE;
 const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
@@ -35,7 +36,7 @@ module.exports = function (vorpal, options) {
             const { key, nonce } = deobfuscateFileKey(storeFile.obfuscatedFileKey);
 
             let info = decodeInfoFileV1(decryptInfo(fs.readFileSync(path.join(INFO_STORE_PATH, file)), key));
-            this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nDownloading...');
+            this.log('File: ', info.fileName, '\nSize: ', info.fileSize, `(${readableSize(info.fileSize)})`, '\nDownloading...');
 
             let encFilePath = path.join(store.TMP_PATH, file);
             await downloadFile(API_BASE + '/file/download/' + file, encFilePath);
