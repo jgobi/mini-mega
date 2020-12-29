@@ -80,42 +80,47 @@ function encrypt (fullPath, destination) {
  */
 module.exports = function (vorpal, options) {
     vorpal
-    .command('put <file>', 'Encrypt and upload a file to the server')
+    .command('put <file> [files...]', 'Encrypt and upload a file to the server')
     .autocomplete({
         data: autocomplete,
     })
     .action(async function(args) {
-        const input = path.isAbsolute(args.file) ? args.file : path.join(store.localFolder, args.file);
-        const output = path.join(store.TMP_PATH, randomBytes(9).toString('base64').replace(/\+/g, '-').replace(/\//g, '_'));
+        if (!args.files) args.files = [];
+        args.files.unshift(args.file);
 
-        let relativeInput = path.relative(store.localFolder, input);
-        this.log('Encrypting file "' + relativeInput + '...');
+        for (let curFile of args.files) {
+            const input = path.isAbsolute(curFile) ? curFile : path.join(store.localFolder, curFile);
+            const output = path.join(store.TMP_PATH, randomBytes(9).toString('base64').replace(/\+/g, '-').replace(/\//g, '_'));
 
-        encrypt(input, output);
+            let relativeInput = path.relative(store.localFolder, input);
+            this.log('Encrypting file "' + relativeInput + '...');
 
-        this.log('Uploading file "' + relativeInput + '...');
+            encrypt(input, output);
 
-        let form = new FormData();
-        form.append('key', fs.readFileSync(output + '.key').toString('base64').substr(0, 43));
-        form.append('file', fs.createReadStream(output));
-        form.append('info_file', fs.createReadStream(output + '.info'));
+            this.log('Uploading file "' + relativeInput + '...');
 
-        let res = await axios.post(API_BASE + '/file/create', form, {
-            headers: {
-                ...form.getHeaders(),
-                'Authorization': 'Bearer ' + store.sessionIdentifier,
-            },
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity
-        });
+            let form = new FormData();
+            form.append('key', fs.readFileSync(output + '.key').toString('base64').substr(0, 43));
+            form.append('file', fs.createReadStream(output));
+            form.append('info_file', fs.createReadStream(output + '.info'));
 
-        this.log('Cleaning temporary files...');
-        fs.unlinkSync(output);
-        fs.unlinkSync(output + '.key');
-        fs.unlinkSync(output + '.info');
+            let res = await axios.post(API_BASE + '/file/create', form, {
+                headers: {
+                    ...form.getHeaders(),
+                    'Authorization': 'Bearer ' + store.sessionIdentifier,
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
+            });
 
-        let { handler } = res.data;
-        this.log(`Done with file handler: ${handler} !\n`);
+            this.log('Cleaning temporary files...');
+            fs.unlinkSync(output);
+            fs.unlinkSync(output + '.key');
+            fs.unlinkSync(output + '.info');
+
+            let { handler } = res.data;
+            this.log(`Done with file handler: ${handler} !\n`);
+        }
     })
     .cancel(() => void 0);
 }

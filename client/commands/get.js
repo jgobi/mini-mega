@@ -17,48 +17,55 @@ const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
  */
 module.exports = function (vorpal, options) {
     vorpal
-    .command('get <hash>', 'Download a file via hash')
+    .command('get <hash> [hashes...]', 'Download a file via hash')
     .autocomplete({
       data: () => store.files.map(a => a.fileHandler)
     })
     .action(async function(args) {
-        let file = args.hash;
-        let storeFile = store.files.find(a => a.fileHandler === file);
-        if (!storeFile) return this.log('Not found, run rl to update.');
+        if (!args.hashes) args.hashes = [];
+        args.hashes.unshift(args.hash);
+        
+        for (let file of args.hashes) {
+            let storeFile = store.files.find(a => a.fileHandler === file);
+            if (!storeFile) {
+                this.log(file + ' not found, run rl to update.');
+                continue;
+            }
 
-        const { key, nonce } = deobfuscateFileKey(storeFile.obfuscatedFileKey);
+            const { key, nonce } = deobfuscateFileKey(storeFile.obfuscatedFileKey);
 
-        let info = decodeInfoFileV1(decryptInfo(fs.readFileSync(path.join(INFO_STORE_PATH, file)), key));
-        this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nDownloading...');
+            let info = decodeInfoFileV1(decryptInfo(fs.readFileSync(path.join(INFO_STORE_PATH, file)), key));
+            this.log('File: ', info.fileName, '\nSize: ', info.fileSize, '\nDownloading...');
 
-        let encFilePath = path.join(store.TMP_PATH, file);
-        await downloadFile(API_BASE + '/file/download/' + file, encFilePath);
+            let encFilePath = path.join(store.TMP_PATH, file);
+            await downloadFile(API_BASE + '/file/download/' + file, encFilePath);
 
-        this.log('Decrypting file...')
+            this.log('Decrypting file...')
 
-        let output = path.join(store.localFolder, info.fileName);
+            let output = path.join(store.localFolder, info.fileName);
 
-        const fileGenerator = readFileChunk(encFilePath, CHUNK_SIZE);
+            const fileGenerator = readFileChunk(encFilePath, CHUNK_SIZE);
 
-        let encryptedFileSize = 0
+            let encryptedFileSize = 0
 
-        fs.writeFileSync(output, Buffer.alloc(0));
-        let ctr = 0;
-        let i = 0;
-        for (let buf of fileGenerator) {
-            if (!buf) break;
-            
-            const macS = i*(CHUNK_SIZE/0x100000), macE = (i+1)*(CHUNK_SIZE/0x100000);
-            encryptedFileSize += buf.length;
-            let dec = decryptChunk(buf, key, nonce, info.macs.slice(macS, macE), ctr);
-            ctr = dec.ctr;
-            
-            let a = encryptedFileSize > info.fileSize ? encryptedFileSize - info.fileSize : 0;
-            fs.appendFileSync(output, dec.decryptedChunk.slice(0, dec.decryptedChunk.length - a));
-            i++;
+            fs.writeFileSync(output, Buffer.alloc(0));
+            let ctr = 0;
+            let i = 0;
+            for (let buf of fileGenerator) {
+                if (!buf) break;
+                
+                const macS = i*(CHUNK_SIZE/0x100000), macE = (i+1)*(CHUNK_SIZE/0x100000);
+                encryptedFileSize += buf.length;
+                let dec = decryptChunk(buf, key, nonce, info.macs.slice(macS, macE), ctr);
+                ctr = dec.ctr;
+                
+                let a = encryptedFileSize > info.fileSize ? encryptedFileSize - info.fileSize : 0;
+                fs.appendFileSync(output, dec.decryptedChunk.slice(0, dec.decryptedChunk.length - a));
+                i++;
+            }
+
+            fs.unlinkSync(encFilePath);
+            this.log('Done!\n');
         }
-
-        fs.unlinkSync(encFilePath);
-        this.log('Done!\n');
     });
 };

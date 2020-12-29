@@ -65,7 +65,7 @@ module.exports = function (vorpal, options) {
                     })
                 );
             }
-            await Promise.all(p).then(() => process.stdout.write('\r' + Array(30 + ll * 2).fill(' ').join('') + '\r'));
+            await Promise.all(p).then(() => process.stdout.write('\r' + Array(30 + ll * 4).fill(' ').join('') + '\r'));
         }
 
         updateFiles(remoteFiles);
@@ -88,31 +88,38 @@ module.exports = function (vorpal, options) {
     });
 
     vorpal
-    .command('unlink <hash>', 'Delete a file on remote')
+    .command('unlink <hash> [hashes...]', 'Delete a file on remote')
     .autocomplete({
         data: () => store.files.map(a => a.fileHandler)
     })
     .action(async function(args) {
-        let file = args.hash;
-        let idx = store.files.findIndex(f => f.fileHandler === file);
-        if (idx < 0) return this.log('Not found, run rl to update.');
-        let info = store.files[idx];
-        this.log('Deleting file: ', info.fileName, '\nSize: ', info.fileSize, `(${readableSize(info.fileSize)})`);
-        const { confirm } = await this.prompt({
-            name: 'confirm',
-            type: 'confirm',
-            message: 'Are you sure? ',
-            default: false,
-        });
-        if (!confirm) return;
-
-        await axios.delete(API_BASE + '/file/unlink/' + file, {
-            headers: {
-                'Authorization': 'Bearer ' + store.sessionIdentifier,
+        if (!args.hashes) args.hashes = [];
+        args.hashes.unshift(args.hash);
+        
+        for (let file of args.hashes) {
+            let idx = store.files.findIndex(f => f.fileHandler === file);
+            if (idx < 0) {
+                this.log(file + ' not found, run rl to update.');
+                continue;
             }
-        });
-        store.files.splice(idx, 1);
-        this.log('Done deleting.\n');
+            let info = store.files[idx];
+            this.log('Deleting file: ', info.fileName, '\nHandler: ', info.fileHandler, '\nSize: ', info.fileSize, `(${readableSize(info.fileSize)})`);
+            const { confirm } = await this.prompt({
+                name: 'confirm',
+                type: 'confirm',
+                message: 'Are you sure? ',
+                default: false,
+            });
+            if (!confirm) continue;
+
+            await axios.delete(API_BASE + '/file/unlink/' + file, {
+                headers: {
+                    'Authorization': 'Bearer ' + store.sessionIdentifier,
+                }
+            });
+            store.files.splice(idx, 1);
+            this.log('Done deleting.\n');
+        }
     });
 
     // vorpal
