@@ -65,11 +65,11 @@ module.exports = function (vorpal, options) {
                     })
                 );
             }
-            await Promise.all(p).then(() => process.stdout.write('\r' + Array(30 + ll * 4).fill(' ').join('') + '\r'));
+            await Promise.all(p).then(() => process.stdout.clearLine());
         }
 
         updateFiles(remoteFiles);
-        this.log('File Handler |  Size | Name');
+        this.log('\rFile Handler |  Size | Name');
         this.log(store.files.map(a => `${a.fileHandler} | ${readableSize(a.fileSize).padStart(5)} | ${a.fileName}`).join('\n'), '\n');
     });
 
