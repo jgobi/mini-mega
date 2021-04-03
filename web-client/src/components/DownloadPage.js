@@ -159,7 +159,7 @@ export default class DownloadPage extends React.Component {
                 value={this.state.downloadProgress}
               />
               <p>
-                {Math.floor(
+                {this.state.downloadProgress > this.state.size ? 100 : Math.floor(
                   (this.state.downloadProgress * 100) / this.state.size
                 )}
                 %<br />(
