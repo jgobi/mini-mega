@@ -39,7 +39,6 @@ export default class DownloadPage extends React.Component {
     }
     try {
       obfuscatedFileKey = Buffer.from(fileKeyProp, 'base64');
-      console.log(fileKeyProp, obfuscatedFileKey)
       if (obfuscatedFileKey.length !== 32) throw new Error('Invalid file key size.');
     } catch (err) {
       return this.setState({
