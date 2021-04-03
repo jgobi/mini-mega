@@ -3,7 +3,7 @@
 // v|s i z e|r|n|f i l e n a m e .
 // .|n m|c o n c m a c s . .|x x x
 // 
-// v = version (1) - 1 byte
+// v = version (1 - CCM, 2 - GCM) - 1 byte
 // size = floor(file size / 16) - UInt32 (4 bytes)
 // r = file size % 16 - 1 byte
 // n = file name size - 1 byte unsigned
@@ -19,8 +19,8 @@
  * @param {Buffer} fileName 
  * @param {Buffer[]} macs 
  */
-function encodeInfoFileV1(fileSize, fileName, macs) {
-    const version = 1;
+function encodeInfoFileV2(fileSize, fileName, macs) {
+    const version = 2;
 
     const fileSize16 = Math.floor(fileSize / 16);
     const remainder = fileSize % 16;
@@ -48,9 +48,9 @@ function encodeInfoFileV1(fileSize, fileName, macs) {
  * 
  * @param {Buffer} file
  */
-function decodeInfoFileV1(file) {
-    const isVersion1 = file.readUInt8(0) === 1;
-    if (!isVersion1) throw new Error('Info file version is invalid');
+function decodeInfoFileV2(file) {
+    const isVersion1Or2 = file.readUInt8(0) === 1 || file.readUInt8(0) === 2;
+    if (!isVersion1Or2) throw new Error('Info file version is invalid');
 
     const fileSize16 = file.readUInt32BE(1) * 16; // size
     const remainder = file.readUInt8(5); // r
@@ -65,6 +65,7 @@ function decodeInfoFileV1(file) {
     }
 
     return {
+        alg: 'aes-128-' + (file.readUInt8(0) === 1 ? 'ccm' : 'gcm'),
         fileSize: fileSize16 + remainder,
         fileName,
         macs,
@@ -72,6 +73,6 @@ function decodeInfoFileV1(file) {
 }
 
 module.exports = {
-    encodeInfoFileV1,
-    decodeInfoFileV1,
+    encodeInfoFileV2,
+    decodeInfoFileV2,
 };

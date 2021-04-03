@@ -9,7 +9,7 @@ if (fileName.length > 255) return console.error('Filename too long');
 
 const { generateFileKey, obfuscateFileKey } = require('../keys');
 const { encryptChunk, encryptInfo } = require('../encrypt');
-const { encodeInfoFileV1 } = require('../infoFile');
+const { encodeInfoFileV2 } = require('../infoFile');
 const { readFileChunk } = require('../readFile');
 
 console.log('Encrypting file ' + fileName + ' with 16MB chunks.');
@@ -41,7 +41,7 @@ for (let buf of fileGenerator) {
 
 console.log('finishing...');
 
-let encryptedInfoFile = encryptInfo(encodeInfoFileV1(fileSize, fileName, macs), key);
+let encryptedInfoFile = encryptInfo(encodeInfoFileV2(fileSize, fileName, macs), key);
 writeFileSync(join(__dirname, process.argv[3]+'.info'), encryptedInfoFile);
 
 let obfuscatedFileKey = obfuscateFileKey(key, nonce, condensedMac).toString('base64').substr(0, 43);

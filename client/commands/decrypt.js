@@ -5,7 +5,7 @@ const { createDecipheriv } = require('crypto');
 
 const { deobfuscateFileKey } = require('../helpers/keys');
 const { decryptChunk, decryptInfo } = require('../helpers/decrypt');
-const { decodeInfoFileV1 } = require('../helpers/infoFile');
+const { decodeInfoFileV2 } = require('../helpers/infoFile');
 const { readFileChunk } = require('../helpers/readFile');
 
 const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
@@ -36,7 +36,7 @@ function* decrypt (inputPath, outputPath) {
     let { key, nonce } = deobfuscateFileKey(obfuscatedFileKey);
 
     let infoFile = fs.readFileSync(inputPath+'.info');
-    const { fileName, fileSize, macs } = decodeInfoFileV1(decryptInfo(infoFile, key));
+    const { fileName, fileSize, macs, alg } = decodeInfoFileV2(decryptInfo(infoFile, key));
 
     const output = outputPath || path.join(store.localFolder, fileName);
     yield output;
@@ -53,7 +53,7 @@ function* decrypt (inputPath, outputPath) {
         
         const macS = i*(CHUNK_SIZE/0x100000), macE = (i+1)*(CHUNK_SIZE/0x100000);
         encryptedFileSize += buf.length;
-        let dec = decryptChunk(buf, key, nonce, macs.slice(macS, macE), ctr);
+        let dec = decryptChunk(buf, key, nonce, macs.slice(macS, macE), ctr, alg);
         ctr = dec.ctr;
         
         let a = encryptedFileSize > fileSize ? encryptedFileSize - fileSize : 0;

@@ -29,7 +29,7 @@ function encryptChunk(chunk, key, nonce, ctr = 0, condensedMac = null) {
         iv.writeUInt32BE(ctr, 8);
         
         // encrypt the data
-        const cipher = crypto.createCipheriv('aes-128-ccm', key, iv, {
+        const cipher = crypto.createCipheriv('aes-128-gcm', key, iv, {
           authTagLength: 16
         }).setAutoPadding(false);
         const encryptedData = cipher.update(data);

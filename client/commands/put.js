@@ -11,7 +11,7 @@ const { createCipheriv, randomBytes } = require('crypto');
 
 const { generateFileKey, obfuscateFileKey } = require('../helpers/keys');
 const { encryptChunk, encryptInfo } = require('../helpers/encrypt');
-const { encodeInfoFileV1 } = require('../helpers/infoFile');
+const { encodeInfoFileV2 } = require('../helpers/infoFile');
 const { readFileChunk } = require('../helpers/readFile');
 
 const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
@@ -61,7 +61,7 @@ function encrypt (fullPath, destination) {
         fs.appendFileSync(destination, enc.encryptedChunk);
     }
 
-    let encryptedInfoFile = encryptInfo(encodeInfoFileV1(fileSize, fileName, macs), key);
+    let encryptedInfoFile = encryptInfo(encodeInfoFileV2(fileSize, fileName, macs), key);
     fs.writeFileSync(destination + '.info', encryptedInfoFile);
 
     let obfuscatedFileKey = obfuscateFileKey(key, nonce, condensedMac);

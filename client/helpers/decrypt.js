@@ -8,7 +8,7 @@ const crypto = require('crypto');
  * @param {Buffer[]} macs 
  * @param {Number} ctr 
  */
-function decryptChunk(chunk, key, nonce, macs, ctr = 0) {
+function decryptChunk(chunk, key, nonce, macs, ctr = 0, alg='aes-128-gcm') {
     // It's not necessary to pad the chunk, as its already ok (as it's encrypted)
     const decryptedChunk = Buffer.allocUnsafe(chunk.length);
 
@@ -23,7 +23,7 @@ function decryptChunk(chunk, key, nonce, macs, ctr = 0) {
         iv.writeUInt32BE(ctr, 8);
         
         // decrypt the data
-        const decipher = crypto.createDecipheriv('aes-128-ccm', key, iv, {
+        const decipher = crypto.createDecipheriv(alg, key, iv, {
           authTagLength: 16
         }).setAutoPadding(false);
         decipher.setAuthTag(macs[Math.floor(i/0x100000)]);

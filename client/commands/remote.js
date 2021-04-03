@@ -1,7 +1,7 @@
 const store = require('../store');
 const axios = require('axios').default;
 const path = require('path');
-const { decodeInfoFileV1 } = require('../helpers/infoFile');
+const { decodeInfoFileV2 } = require('../helpers/infoFile');
 const { decryptInfo } = require('../helpers/decrypt');
 const { createDecipheriv } = require('crypto');
 const { deobfuscateFileKey } = require('../helpers/keys');
@@ -19,7 +19,7 @@ function updateFiles (remoteFiles) {
         const decipher = createDecipheriv('aes-128-ecb', store.masterKey, '').setAutoPadding(false);
         const obfuscatedFileKey = Buffer.concat([decipher.update(Buffer.from(file.encryptedFileKey, 'base64')), decipher.final()]);
         const { key } = deobfuscateFileKey(obfuscatedFileKey);
-        let { fileName, fileSize } = decodeInfoFileV1(decryptInfo(info, key));
+        let { fileName, fileSize } = decodeInfoFileV2(decryptInfo(info, key));
         store.files.push({
             ...file,
             fileName,
@@ -83,7 +83,7 @@ module.exports = function (vorpal, options) {
         let info = store.files.find(a => a.fileHandler == file);
         if (!info) return this.log('Not found, run rl to update.');
         
-        let shareLink = 'mini-mega://' + info.fileHandler + '#' + info.obfuscatedFileKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').substr(0, 43);
+        let shareLink = 'http://localhost:3000/download/' + info.fileHandler + '#' + info.obfuscatedFileKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').substr(0, 43);
         this.log('File: ', info.fileName, '\nSize: ', info.fileSize, `(${readableSize(info.fileSize)})`, '\nShare link: ', shareLink, '\n');
     });
 

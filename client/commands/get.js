@@ -1,7 +1,7 @@
 const store = require('../store');
 const path = require('path');
 const fs = require('fs');
-const { decodeInfoFileV1 } = require('../helpers/infoFile');
+const { decodeInfoFileV2 } = require('../helpers/infoFile');
 const { readFileChunk } = require('../helpers/readFile');
 const { decryptInfo, decryptChunk } = require('../helpers/decrypt');
 const { deobfuscateFileKey } = require('../helpers/keys');
@@ -35,7 +35,7 @@ module.exports = function (vorpal, options) {
 
             const { key, nonce } = deobfuscateFileKey(storeFile.obfuscatedFileKey);
 
-            let info = decodeInfoFileV1(decryptInfo(fs.readFileSync(path.join(INFO_STORE_PATH, file)), key));
+            let info = decodeInfoFileV2(decryptInfo(fs.readFileSync(path.join(INFO_STORE_PATH, file)), key));
             this.log('File: ', info.fileName, '\nSize: ', info.fileSize, `(${readableSize(info.fileSize)})`, '\nDownloading...');
 
             let encFilePath = path.join(store.TMP_PATH, file);
@@ -57,7 +57,7 @@ module.exports = function (vorpal, options) {
                 
                 const macS = i*(CHUNK_SIZE/0x100000), macE = (i+1)*(CHUNK_SIZE/0x100000);
                 encryptedFileSize += buf.length;
-                let dec = decryptChunk(buf, key, nonce, info.macs.slice(macS, macE), ctr);
+                let dec = decryptChunk(buf, key, nonce, info.macs.slice(macS, macE), ctr, info.alg);
                 ctr = dec.ctr;
                 
                 let a = encryptedFileSize > info.fileSize ? encryptedFileSize - info.fileSize : 0;

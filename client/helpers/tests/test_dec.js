@@ -5,7 +5,7 @@ const CHUNK_SIZE = 0x1000000; // pelo menos 0x100000
 
 const { deobfuscateFileKey } = require('../keys');
 const { decryptChunk, decryptInfo } = require('../decrypt');
-const { decodeInfoFileV1 } = require('../infoFile');
+const { decodeInfoFileV2 } = require('../infoFile');
 const { readFileChunk } = require('../readFile');
 
 console.log('initializing...');
@@ -14,7 +14,7 @@ let obfuscatedFileKey = readFileSync(join(__dirname, process.argv[2]+'.key'), 'u
 let { key, nonce } = deobfuscateFileKey(Buffer.from(obfuscatedFileKey, 'base64'));
 
 let infoFile = readFileSync(join(__dirname, process.argv[2]+'.info'));
-const { fileName, fileSize, macs } = decodeInfoFileV1(decryptInfo(infoFile, key));
+const { fileName, fileSize, macs, alg } = decodeInfoFileV2(decryptInfo(infoFile, key));
 
 const fileGenerator = readFileChunk(join(__dirname, process.argv[2]), CHUNK_SIZE);
 
@@ -36,7 +36,7 @@ for (let buf of fileGenerator) {
     
     console.log('chunk '+(i++));
 
-    let dec = decryptChunk(buf, key, nonce, macs.slice(macS, macE), ctr);
+    let dec = decryptChunk(buf, key, nonce, macs.slice(macS, macE), ctr, alg);
     ctr = dec.ctr;
     
     let a = encryptedFileSize > fileSize ? encryptedFileSize - fileSize : 0;
