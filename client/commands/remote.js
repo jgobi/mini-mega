@@ -83,7 +83,7 @@ module.exports = function (vorpal, options) {
         let info = store.files.find(a => a.fileHandler == file);
         if (!info) return this.log('Not found, run rl to update.');
         
-        let shareLink = 'http://localhost:3000/download/' + info.fileHandler + '#' + info.obfuscatedFileKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').substr(0, 43);
+        let shareLink = 'https://minicloud.ga/download/' + info.fileHandler + '#' + info.obfuscatedFileKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').substr(0, 43);
         this.log('File: ', info.fileName, '\nSize: ', info.fileSize, `(${readableSize(info.fileSize)})`, '\nShare link: ', shareLink, '\n');
     });
 
